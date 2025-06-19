@@ -2,44 +2,42 @@ import React, { useState } from 'react';
 import {
   Box, Typography, CircularProgress, Alert, TextField, Button, Paper
 } from '@mui/material';
-
+import api from '../services/api';
 function LoginPage({ onLogin }) {
   const [cusId, setCusId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => {
-    setIsLoading(true);
-    setError('');
+ const handleLogin = async () => {
+  setIsLoading(true);
+  setError('');
 
-    if (!cusId.trim() || !password.trim()) {
-      setError('Customer ID and Password are required');
-      setIsLoading(false);
-      return;
-    }
+  if (!cusId.trim() || !password.trim()) {
+    setError('Customer ID and Password are required');
+    setIsLoading(false);
+    return;
+  }
 
-    try {
-      const response = await fetch('http://localhost:5000/api/customers/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cusId: cusId.trim(), password: password.trim() }),
-      });
+  try {
+    const response = await api.post('/customers/login', {
+      cusId: cusId.trim(),
+      password: password.trim(),
+    });
 
-      const data = await response.json();
-      if (!response.ok) {
-        setError(data.error || 'Login failed');
-      } else {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        onLogin(data.user);
-      }
-    } catch (err) {
+    localStorage.setItem('user', JSON.stringify(response.data.user));
+    onLogin(response.data.user);
+
+  } catch (err) {
+    if (err.response && err.response.data?.error) {
+      setError(err.response.data.error);
+    } else {
       setError('Network error. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
-  };
-
+  } finally {
+    setIsLoading(false);
+  }
+};
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleLogin();
   };
